@@ -1,0 +1,42 @@
+[
+  {
+    "id": "run-001",
+    "repository": "bts-bdp-assignment",
+    "branch": "main",
+    "status": "success",
+    "triggered_by": "push",
+    "started_at": "2024-01-15T10:00:00",
+    "finished_at": "2024-01-15T10:15:00",
+    "stages": ["lint", "test", "build", "deploy"]
+  },
+  {
+    "id": "run-002",
+    "repository": "bts-bdp-assignment",
+    "branch": "feature/s9",
+    "status": "failure",
+    "triggered_by": "pull_request",
+    "started_at": "2024-01-16T11:00:00",
+    "finished_at": "2024-01-16T11:08:00",
+    "stages": ["lint", "test", "build"]
+  },
+  {
+    "id": "run-003",
+    "repository": "bts-bdp-exercises",
+    "branch": "main",
+    "status": "running",
+    "triggered_by": "schedule",
+    "started_at": "2024-01-17T09:00:00",
+    "finished_at": null,
+    "stages": ["lint", "test"]
+  },
+  {
+    "id": "run-004",
+    "repository": "bts-bdp-exercises",
+    "branch": "main",
+    "status": "pending",
+    "triggered_by": "manual",
+    "started_at": "2024-01-18T08:00:00",
+    "finished_at": null,
+    "stages": ["lint"]
+  }
+]
