@@ -1,0 +1,20 @@
+{
+  "run-001": [
+    {"name": "lint", "status": "success", "started_at": "2024-01-15T10:00:00", "finished_at": "2024-01-15T10:02:00", "logs_url": "/api/s9/pipelines/run-001/stages/lint/logs"},
+    {"name": "test", "status": "success", "started_at": "2024-01-15T10:02:00", "finished_at": "2024-01-15T10:08:00", "logs_url": "/api/s9/pipelines/run-001/stages/test/logs"},
+    {"name": "build", "status": "success", "started_at": "2024-01-15T10:08:00", "finished_at": "2024-01-15T10:12:00", "logs_url": "/api/s9/pipelines/run-001/stages/build/logs"},
+    {"name": "deploy", "status": "success", "started_at": "2024-01-15T10:12:00", "finished_at": "2024-01-15T10:15:00", "logs_url": "/api/s9/pipelines/run-001/stages/deploy/logs"}
+  ],
+  "run-002": [
+    {"name": "lint", "status": "success", "started_at": "2024-01-16T11:00:00", "finished_at": "2024-01-16T11:02:00", "logs_url": "/api/s9/pipelines/run-002/stages/lint/logs"},
+    {"name": "test", "status": "failure", "started_at": "2024-01-16T11:02:00", "finished_at": "2024-01-16T11:08:00", "logs_url": "/api/s9/pipelines/run-002/stages/test/logs"},
+    {"name": "build", "status": "skipped", "started_at": "2024-01-16T11:08:00", "finished_at": null, "logs_url": "/api/s9/pipelines/run-002/stages/build/logs"}
+  ],
+  "run-003": [
+    {"name": "lint", "status": "success", "started_at": "2024-01-17T09:00:00", "finished_at": "2024-01-17T09:02:00", "logs_url": "/api/s9/pipelines/run-003/stages/lint/logs"},
+    {"name": "test", "status": "running", "started_at": "2024-01-17T09:02:00", "finished_at": null, "logs_url": "/api/s9/pipelines/run-003/stages/test/logs"}
+  ],
+  "run-004": [
+    {"name": "lint", "status": "pending", "started_at": "2024-01-18T08:00:00", "finished_at": null, "logs_url": "/api/s9/pipelines/run-004/stages/lint/logs"}
+  ]
+}
