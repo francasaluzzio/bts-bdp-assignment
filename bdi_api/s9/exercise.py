@@ -1,6 +1,8 @@
+import json
+import os
 from datetime import datetime
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
 s9 = APIRouter(
@@ -11,6 +13,18 @@ s9 = APIRouter(
     prefix="/api/s9",
     tags=["s9"],
 )
+
+DATA_DIR = os.path.dirname(__file__)
+
+
+def load_pipelines():
+    with open(os.path.join(DATA_DIR, "data.json")) as f:
+        return json.load(f)
+
+
+def load_stages():
+    with open(os.path.join(DATA_DIR, "stages_data.json")) as f:
+        return json.load(f)
 
 
 class PipelineRun(BaseModel):
@@ -39,33 +53,26 @@ def list_pipelines(
     num_results: int = 100,
     page: int = 0,
 ) -> list[PipelineRun]:
-    """List CI/CD pipeline runs with their status.
+    pipelines = load_pipelines()
 
-    Returns a list of pipeline runs, optionally filtered by repository and status.
-    Ordered by started_at descending (most recent first).
-    Paginated with `num_results` per page and `page` number (0-indexed).
+    if repository:
+        pipelines = [p for p in pipelines if p["repository"] == repository]
+    if status_filter:
+        pipelines = [p for p in pipelines if p["status"] == status_filter]
 
-    Valid statuses: "success", "failure", "running", "pending"
-    Valid triggered_by values: "push", "pull_request", "schedule", "manual"
-    """
-    # TODO: Return pipeline runs from your data source
-    # TODO: Filter by repository if provided
-    # TODO: Filter by status if status_filter is provided
-    # TODO: Order by started_at descending
-    # TODO: Apply pagination
-    return []
+    pipelines.sort(key=lambda x: x["started_at"], reverse=True)
+
+    start = page * num_results
+    return [PipelineRun(**p) for p in pipelines[start: start + num_results]]
 
 
 @s9.get("/pipelines/{pipeline_id}/stages")
 def get_pipeline_stages(pipeline_id: str) -> list[PipelineStage]:
-    """Get the stages of a specific pipeline run.
+    pipelines = load_pipelines()
+    pipeline_ids = [p["id"] for p in pipelines]
 
-    Returns the stages in execution order.
-    Each stage has a name, status, timestamps, and a logs URL.
+    if pipeline_id not in pipeline_ids:
+        raise HTTPException(status_code=404, detail="Pipeline not found")
 
-    Typical stages: "lint", "test", "build", "deploy"
-    """
-    # TODO: Look up the pipeline run by pipeline_id
-    # TODO: Return the stages with their details
-    # TODO: Return 404 if pipeline_id not found
-    return []
+    stages = load_stages()
+    return [PipelineStage(**s) for s in stages.get(pipeline_id, [])]
