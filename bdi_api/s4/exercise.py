@@ -1,5 +1,11 @@
+import gzip
+import json
+import os
 from typing import Annotated
 
+import boto3
+import requests
+from bs4 import BeautifulSoup
 from fastapi import APIRouter, status
 from fastapi.params import Query
 
@@ -31,25 +37,80 @@ def download_data(
         ),
     ] = 100,
 ) -> str:
-    """Same as s1 but store to an aws s3 bucket taken from settings
-    and inside the path `raw/day=20231101/`
-
-    NOTE: you can change that value via the environment variable `BDI_S3_BUCKET`
-    """
     base_url = settings.source_url + "/2023/11/01/"
     s3_bucket = settings.s3_bucket
-    s3_prefix_path = "raw/day=20231101/"
-    # TODO
+    s3_prefix = "raw/day=20231101/"
+
+    # Get list of files from the page
+    response = requests.get(base_url)
+    soup = BeautifulSoup(response.text, "html.parser")
+    links = [a["href"] for a in soup.find_all("a", href=True) if a["href"].endswith(".json.gz")]
+    links = links[:file_limit]
+
+    s3_client = boto3.client("s3")
+
+    for filename in links:
+        file_url = base_url + filename
+        r = requests.get(file_url)
+        s3_client.put_object(
+            Bucket=s3_bucket,
+            Key=s3_prefix + filename,
+            Body=r.content,
+        )
 
     return "OK"
 
 
 @s4.post("/aircraft/prepare")
 def prepare_data() -> str:
-    """Obtain the data from AWS s3 and store it in the local `prepared` directory
-    as done in s1.
+    s3_bucket = settings.s3_bucket
+    s3_prefix = "raw/day=20231101/"
+    prepared_dir = os.path.join(settings.prepared_dir, "day=20231101")
 
-    All the `/api/s1/aircraft/` endpoints should work as usual
-    """
-    # TODO
+    # Clean prepared folder
+    if os.path.exists(prepared_dir):
+        for f in os.listdir(prepared_dir):
+            os.remove(os.path.join(prepared_dir, f))
+    else:
+        os.makedirs(prepared_dir)
+
+    s3_client = boto3.client("s3")
+
+    # List all files in S3
+    response = s3_client.list_objects_v2(Bucket=s3_bucket, Prefix=s3_prefix)
+    objects = response.get("Contents", [])
+
+    for obj in objects:
+        key = obj["Key"]
+        filename = os.path.basename(key)
+
+        # Download from S3
+        s3_response = s3_client.get_object(Bucket=s3_bucket, Key=key)
+        compressed_data = s3_response["Body"].read()
+
+        # Decompress and parse
+        with gzip.open(__import__("io").BytesIO(compressed_data), "rt") as f:
+            data = json.load(f)
+
+        aircraft_list = data.get("aircraft", [])
+        timestamp = data.get("now", 0)
+
+        prepared = []
+        for ac in aircraft_list:
+            prepared.append({
+                "icao": ac.get("hex", "").strip(),
+                "registration": ac.get("r", ""),
+                "type": ac.get("t", ""),
+                "lat": ac.get("lat"),
+                "lon": ac.get("lon"),
+                "timestamp": timestamp,
+                "alt_baro": ac.get("alt_baro"),
+                "gs": ac.get("gs"),
+                "emergency": ac.get("emergency", "none") not in ("none", "", None),
+            })
+
+        out_filename = filename.replace(".json.gz", ".json")
+        with open(os.path.join(prepared_dir, out_filename), "w") as f:
+            json.dump(prepared, f)
+
     return "OK"
